@@ -1,0 +1,39 @@
+pipeline {
+    agent any
+
+    tools {
+        // Install the Maven version configured as "M3" and add it to the path.
+        maven "Maven"
+    }
+
+    stages {
+        stage('Clone') {
+            steps {
+                // Get some code from a GitHub repository
+                 git credentialsId: 'mekalakiran1908_Git_Credentials', url: 'https://github.com/Mekalakiran1908/spring3-mvc-maven-xml-hello-world.git'
+                }
+				}
+		stage('Build'){
+				// Run Maven on a Unix agent.
+            steps{    
+				sh "mvn -Dmaven.test.failure.ignore=true clean package"
+				}
+				}
+		stage('deploy'){
+            steps{
+				withCredentials([usernameColonPassword(credentialsId: 'kiran_tomcat_credentials', variable: 'Tomcat_cred')]) {
+				sh "curl -v -u $Tomcat_cred -T /var/lib/jenkins/workspace/Spring3_Pipeline/target/spring3-mvc-maven-xml-hello-world-1.0-SNAPSHOT.war 'http://65.2.146.67:8080/manager/text/deploy?path=/springapp&update=true'"
+				}
+            }
+}
+}
+			post {
+                // If Maven was able to run the tests, even if some of the test
+                // failed, record the test results and archive the jar file.
+                success {
+                   // junit '**/target/surefire-reports/TEST-*.xml'
+                    archiveArtifacts 'target/*.war'
+                }
+            }
+
+}
